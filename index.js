@@ -20,15 +20,16 @@ webix.ajax().get('http://localhost:8080/keywords', function (t, d) {
                         onContext: {}
                     }
                 ]
-            }, 2)
+            })
             list = data[i]
             for (var keyIndex in list){
                 $$(i).add({
                     id: list[keyIndex].id,
                     keyword: list[keyIndex].keyword
                 })
+                // webix.message(list[keyIndex].id)
+                // webix.message(list[keyIndex].keyword)
             }
-            ++counter
         }
         else{
             $$("layout2").addView({
@@ -43,19 +44,19 @@ webix.ajax().get('http://localhost:8080/keywords', function (t, d) {
                         editaction: "dblclick",
                         id: i,
                         template:"#keyword#",
-                        onContext: {},
-                        data: list
+                        onContext: {}
                     }
                 ]
-            }, 2)
-        }
-        list = data[i]
-        for (var keyIndex in list){
-            $$(i).add({
-                id: list[keyIndex].id,
-                keyword: list[keyIndex].keyword
             })
+            list = data[i]
+            for (var keyIndex in list){
+                $$(i).add({
+                    id: list[keyIndex].id,
+                    keyword: list[keyIndex].keyword
+                })
+            }
         }
+        ++counter
         $$("cmenu").attachTo($$(i));
     }
 })
@@ -81,6 +82,13 @@ webix.ui({
                                     }
                                     else{
                                         $$(i).remove(selectedItem)
+                                        console.log(selectedItem)
+                                        fetch("http://localhost:8080/keywords/delete/"+selectedItem, {
+                                            method: "POST",
+                                            credentials: "same-origin", // include, same-origin, *omit
+                                            redirect: "follow", // manual, *follow, error
+                                            referrer: "no-referrer", // no-referrer, *client
+                                        })
                                     }
                                     $$(i).refresh()
                                 }
@@ -92,7 +100,7 @@ webix.ui({
                             var text = $$("filterBox").getValue()
                                 for (var i in data) {
                                     $$(i).filter(function (obj) {
-                                        return obj.value.toLowerCase().indexOf(text.toLowerCase()) === 0
+                                        return obj.keyword.toLowerCase().indexOf(text.toLowerCase()) === 0
                                     })
                                 }
                         }
@@ -144,8 +152,8 @@ webix.ui({
             switch($$("cmenu").getItem(id).value) {
                 case "Add": {
                     var context = this.getContext();
-                    var list = context.obj;;
-                    var parentObj = list.getParentView();
+                    var list = context.obj;
+                    var listId = list.config.id
                     webix.ui({
                         view:"popup",
                         id:"popupAddKey",
@@ -157,16 +165,16 @@ webix.ui({
                                 {view:"text", id:"addingBox",width:350, placeholder:"Type Here New Key Name"},
                                 {view:"button",id:"addition",width:350,label:"Add&Close",click:
                                     function(){
-                                        $$(list).add({
-                                            id: $$("addingBox").getValue(),
-                                            value:$$("addingBox").getValue()
-                                        })
-                                        $$(list).refresh()
+                                        // $$(list).add({
+                                        //     id: $$("addingBox").getValue(),
+                                        //     value:$$("addingBox").getValue()
+                                        // })
+                                        // $$(list).refresh()
                                         var addedKey = {
                                             "keyword": $$("addingBox").getValue(),
-                                            "category": list.getItemId()
+                                            "category": listId
                                         }
-                                        console.log(list.getItemId())
+                                        console.log(listId)
                                         fetch("http://localhost:8080/keywords", {
                                             method: "POST", // *GET, POST, PUT, DELETE, etc.
                                             credentials: "same-origin", // include, same-origin, *omit
@@ -184,12 +192,18 @@ webix.ui({
                     break;
                 }
                 case "Delete":{
-                    webix.message("Delete")
                     var context = this.getContext();
                     var list = context.obj;
                     var listId = context.id;
                     $$(list).remove(listId)
                     $$(list).refresh()
+                    console.log(listId)
+                    fetch("http://localhost:8080/keywords/delete/"+listId, {
+                        method: "POST",
+                        credentials: "same-origin", // include, same-origin, *omit
+                        redirect: "follow", // manual, *follow, error
+                        referrer: "no-referrer", // no-referrer, *client
+                    })
                     break;
                 }
                 case "Transfer":{
